@@ -54,7 +54,10 @@ public class SuiCallArgDeserializer extends JsonDeserializer<SuiCallArg> {
                     digest = jsonParser.getValueAsString();
                 } else if ("initialSharedVersion".equals(fieldName)) {
                     jsonParser.nextToken();
-                    initialSharedVersion = jsonParser.getBigIntegerValue();
+                    // initialSharedVersion = jsonParser.getBigIntegerValue();
+                    // 先获取字符串值，然后转换为 BigInteger
+                    String versionStr = jsonParser.getValueAsString();
+                    initialSharedVersion = new BigInteger(versionStr);
                 } else if ("mutable".equals(fieldName)) {
                     jsonParser.nextToken();
                     mutable = jsonParser.getBooleanValue();

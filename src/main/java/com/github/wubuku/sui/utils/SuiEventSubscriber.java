@@ -11,8 +11,8 @@ import org.web3j.protocol.websocket.events.Notification;
 import java.util.Collections;
 
 public class SuiEventSubscriber {
-    public static final String SUBSCRIBE_EVENT_METHOD = "sui_subscribeEvent";
-    public static final String UNSUBSCRIBE_EVENT_METHOD = "sui_unsubscribeEvent";
+    public static final String SUBSCRIBE_EVENT_METHOD = "suix_subscribeEvent";
+    public static final String UNSUBSCRIBE_EVENT_METHOD = "suix_unsubscribeEvent";
 
     private final Web3jService web3jService;
 

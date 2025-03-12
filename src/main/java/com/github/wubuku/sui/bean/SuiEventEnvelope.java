@@ -1,5 +1,7 @@
 package com.github.wubuku.sui.bean;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * From TypeScript definition:
  * <p>
@@ -12,6 +14,8 @@ package com.github.wubuku.sui.bean;
  * };
  * </pre>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
+
 public class SuiEventEnvelope extends AbstractSuiEventEnvelope<Object> {
     //todo rename to SuiEvent???
     public SuiEventEnvelope() {

@@ -11,10 +11,7 @@ import org.starcoin.jsonrpc.client.JSONRPC2SessionException;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SuiJsonRpcClient {
     private final JSONRPC2Session jsonrpc2Session;
@@ -356,7 +353,7 @@ public class SuiJsonRpcClient {
         params.add(coinType);
         params.add(cursor);
         params.add(limit);
-        return getCoins("sui_getCoins", params);
+        return getCoins("suix_getCoins", params);
     }
 
     public CoinPage getAllCoins(String owner, String cursor, int limit) {
@@ -364,7 +361,7 @@ public class SuiJsonRpcClient {
         params.add(owner);
         params.add(cursor);
         params.add(limit);
-        return getCoins("sui_getAllCoins", params);
+        return getCoins("suix_getAllCoins", params);
     }
 
     private CoinPage getCoins(String method, List<Object> params) {
@@ -381,7 +378,7 @@ public class SuiJsonRpcClient {
     public SuiCoinMetadata getCoinMetadata(String coinType) {
         List<Object> params = new ArrayList<>();
         params.add(coinType);
-        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("sui_getCoinMetadata", params,
+        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("suix_getCoinMetadata", params,
                 System.currentTimeMillis());
         try {
             JSONRPC2Response<SuiCoinMetadata> jsonrpc2Response = jsonrpc2Session.send(jsonrpc2Request,
@@ -396,7 +393,7 @@ public class SuiJsonRpcClient {
     public Supply getTotalSupply(String coinType) {
         List<Object> params = new ArrayList<>();
         params.add(coinType);
-        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("sui_getTotalSupply", params, System.currentTimeMillis());
+        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("suix_getTotalSupply", params, System.currentTimeMillis());
         try {
             JSONRPC2Response<Supply> jsonrpc2Response = jsonrpc2Session.send(jsonrpc2Request, Supply.class);
             assertSuccess(jsonrpc2Response);
@@ -410,7 +407,7 @@ public class SuiJsonRpcClient {
         List<Object> params = new ArrayList<>();
         params.add(owner);
         params.add(coinType);
-        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("sui_getBalance", params,
+        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("suix_getBalance", params,
                 System.currentTimeMillis());
         try {
             JSONRPC2Response<CoinBalance> jsonrpc2Response = jsonrpc2Session
@@ -425,7 +422,7 @@ public class SuiJsonRpcClient {
     public List<CoinBalance> getAllBalances(String owner) {
         List<Object> params = new ArrayList<>();
         params.add(owner);
-        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("sui_getAllBalances", params, System.currentTimeMillis());
+        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("suix_getAllBalances", params, System.currentTimeMillis());
         try {
             JSONRPC2Response<List<CoinBalance>> jsonrpc2Response = jsonrpc2Session
                     .sendAndGetListResult(jsonrpc2Request, CoinBalance.class);
@@ -465,15 +462,18 @@ public class SuiJsonRpcClient {
         params.add(typeArguments);
         params.add(arguments);
         params.add(gasPayment);
-        params.add(gasBudget);
+        params.add(String.valueOf(gasBudget));
         if (executionMode != null) {
             params.add(executionMode);
         }
+
+
         return moveCall(params);
     }
 
+    //todo 这里需要测试
     private TransactionBytes moveCall(List<Object> params) {
-        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("sui_moveCall", params,
+        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("unsafe_moveCall", params,
                 System.currentTimeMillis());
         try {
             JSONRPC2Response<TransactionBytes> jsonrpc2Response = jsonrpc2Session.send(jsonrpc2Request,
@@ -791,17 +791,45 @@ public class SuiJsonRpcClient {
             String signature,
             String requestType
     ) {
-        List<Object> params = new ArrayList<>();
-        params.add(txBytes);
-        params.add(signature);
-        params.add(requestType);
-        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("sui_executeTransactionSerializedSig", params,
+        //todo 暂时写的
+        List<String> signatures = new ArrayList<>();
+        signatures.add(signature);
+//        List<Object> params = new ArrayList<>();
+//        params.add(txBytes);
+//
+//        params.add(signatures);
+//        params.add(requestType);
+
+        Map<String,Object> params = new HashMap<>();
+        params.put("tx_bytes",txBytes);
+        params.put("signatures",signatures);
+        params.put("request_type",requestType);
+
+        SuiTransactionBlockResponseOptions transactionBlockResponseOptions = new SuiTransactionBlockResponseOptions();
+        transactionBlockResponseOptions.setShowEffects(true);
+        transactionBlockResponseOptions.setShowBalanceChanges(true);
+        transactionBlockResponseOptions.setShowEvents(true);
+        transactionBlockResponseOptions.setShowInput(true);
+        transactionBlockResponseOptions.setShowObjectChanges(true);
+        transactionBlockResponseOptions.setShowRawInput(true);
+
+        params.put("options",transactionBlockResponseOptions);
+
+
+        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("sui_executeTransactionBlock", params,
                 System.currentTimeMillis());
         try {
-            JSONRPC2Response<SuiExecuteTransactionResponse> jsonrpc2Response = jsonrpc2Session.send(jsonrpc2Request,
-                    SuiExecuteTransactionResponse.class);
+//            JSONRPC2Response<SuiExecuteTransactionResponse> jsonrpc2Response = jsonrpc2Session.send(jsonrpc2Request,
+//                    SuiExecuteTransactionResponse.class);
+
+            //执行并返回结果
+            JSONRPC2Response<SuiTransactionBlockResponse> jsonrpc2Response = jsonrpc2Session.send(jsonrpc2Request,
+                    SuiTransactionBlockResponse.class);
+
+
             assertSuccess(jsonrpc2Response);
-            return jsonrpc2Response.getResult();
+//            return jsonrpc2Response.getResult();
+            return null;
         } catch (JSONRPC2SessionException e) {
             throw new RuntimeException(e);
         }
@@ -948,7 +976,7 @@ public class SuiJsonRpcClient {
     public CommitteeInfoResponse getCommitteeInfo(Long epoch) {
         List<Object> params = new ArrayList<>();
         params.add(epoch);
-        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("sui_getCommitteeInfo", params,
+        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("suix_getCommitteeInfo", params,
                 System.currentTimeMillis());
         try {
             JSONRPC2Response<CommitteeInfoResponse> jsonrpc2Response = jsonrpc2Session.send(jsonrpc2Request,

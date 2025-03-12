@@ -21,7 +21,7 @@ public class TransactionBytes {
     /**
      * the gas object to be used
      */
-    private SuiObjectRef gas;
+    private SuiObjectRef[] gas;
     /**
      * objects to be used in this transaction
      */
@@ -30,7 +30,7 @@ public class TransactionBytes {
     public TransactionBytes() {
     }
 
-    public TransactionBytes(String txBytes, SuiObjectRef gas, InputObjectKind[] inputObjects) {
+    public TransactionBytes(String txBytes, SuiObjectRef[] gas, InputObjectKind[] inputObjects) {
         this.txBytes = txBytes;
         this.gas = gas;
         this.inputObjects = inputObjects;
@@ -44,11 +44,11 @@ public class TransactionBytes {
         this.txBytes = txBytes;
     }
 
-    public SuiObjectRef getGas() {
+    public SuiObjectRef[] getGas() {
         return gas;
     }
 
-    public void setGas(SuiObjectRef gas) {
+    public void setGas(SuiObjectRef[] gas) {
         this.gas = gas;
     }
 

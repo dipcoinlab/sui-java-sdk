@@ -1,6 +1,8 @@
 package com.github.wubuku.sui.utils;
 
 import com.google.common.primitives.Bytes;
+import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
+import org.bouncycastle.crypto.signers.Ed25519Signer;
 
 import java.util.Base64;
 
@@ -16,8 +18,12 @@ public class TransactionUtils {
      */
     public static final byte[] INTENT_BYTES = new byte[]{0, 0, 0};
 
+
+
     private TransactionUtils() {
     }
+
+
 
     /**
      * @param privateKey private key
@@ -33,6 +39,19 @@ public class TransactionUtils {
      */
     public static byte[] ed25519SignTransactionBytes(byte[] privateKey, byte[] txBytes) {
         return SignatureUtils.ed25519Sign(privateKey, Bytes.concat(TransactionUtils.INTENT_BYTES, txBytes));
+    }
+
+    //
+    public static boolean verifySignature(byte[] publicKeyBytes, byte[] signature, byte[] message) {
+        try {
+            Ed25519PublicKeyParameters publicKey = new Ed25519PublicKeyParameters(publicKeyBytes);
+            Ed25519Signer verifier = new Ed25519Signer();
+            verifier.init(false, publicKey);
+            verifier.update(message, 0, message.length);
+            return verifier.verifySignature(signature);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to verify signature", e);
+        }
     }
 
 }

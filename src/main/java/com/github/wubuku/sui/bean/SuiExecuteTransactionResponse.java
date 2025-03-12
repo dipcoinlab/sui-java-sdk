@@ -22,6 +22,7 @@ public class SuiExecuteTransactionResponse {
     private SuiFinalizedEffects effects;
     @JsonProperty("confirmed_local_execution")
     private Boolean confirmedLocalExecution;
+    private String digest;
 
     public SuiCertifiedTransaction getCertificate() {
         return certificate;
@@ -45,6 +46,14 @@ public class SuiExecuteTransactionResponse {
 
     public void setConfirmedLocalExecution(Boolean confirmedLocalExecution) {
         this.confirmedLocalExecution = confirmedLocalExecution;
+    }
+
+    public String getDigest() {
+        return digest;
+    }
+
+    public void setDigest(String digest) {
+        this.digest = digest;
     }
 
     @Override

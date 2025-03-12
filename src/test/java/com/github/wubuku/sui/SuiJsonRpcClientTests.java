@@ -6,11 +6,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.wubuku.sui.bean.*;
 import com.github.wubuku.sui.tests.*;
 import com.github.wubuku.sui.utils.HexUtils;
+import com.github.wubuku.sui.utils.SignatureUtils;
 import com.github.wubuku.sui.utils.SuiJsonRpcClient;
 import com.github.wubuku.sui.utils.TransactionUtils;
 import com.google.common.primitives.Bytes;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
+import org.bouncycastle.jcajce.provider.digest.Blake2b;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SuiJsonRpcClientTests {
 
     static final String SUI_COIN_TYPE = "0x2::sui::SUI";
-    static final long DEFAULT_MAX_GAS_BUDGE = 1000000;
+    static final long DEFAULT_MAX_GAS_BUDGE = 10000000;
 
     ObjectMapper objectMapper = new ObjectMapper();
 
@@ -48,13 +50,18 @@ public class SuiJsonRpcClientTests {
 
     @Test
     void testGetOwnedObjects_1() throws MalformedURLException, JsonProcessingException {
-        String url = "https://fullnode.testnet.sui.io/";
+        String url = "https://fullnode.mainnet.sui.io/";
         SuiJsonRpcClient client = new SuiJsonRpcClient(url);
-        //SuiObjectDataFilter filter = new SuiObjectDataFilter.StructType("0x4d6c3dd86aac1db8f2337fe78fb087ef5ea6812715edec09e4d9fa363872c261::liquidity_token::LiquidityToken");
-        SuiObjectDataFilter filter = new SuiObjectDataFilter.StructType("0x507d2aacb7425085612e0d56131a57362729779bf3510c286b98568479314920::equipment::Equipment");
-        SuiObjectResponseQuery query = new SuiObjectResponseQuery(filter, null);
 
-        ObjectsPage ownedObjects = client.getOwnedObjects("0xfc50aa2363f3b3c5d80631cae512ec51a8ba94080500a981f4ae1a2ce4d201c2",
+        List<CoinBalance> allBalances = client.getAllBalances("0xab7f6e97232d633689cf762989455cceb769587c69a9f09a23f537f5605f9e78");
+        System.out.println(allBalances);
+        // todo 可以按照类型过滤的
+        // SuiObjectDataFilter filter = new SuiObjectDataFilter.StructType("0x2::coin::Coin<0x47729a93e74c93d4c3dcf5b3da8b006b40267fc7149c6361c175f2f7a38522d1::pool::LPToken<0x47729a93e74c93d4c3dcf5b3da8b006b40267fc7149c6361c175f2f7a38522d1::teth::TETH, 0x47729a93e74c93d4c3dcf5b3da8b006b40267fc7149c6361c175f2f7a38522d1::tusdc::TUSDC>>");
+       SuiObjectDataFilter filter = new SuiObjectDataFilter.StructType("0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN");
+        SuiObjectDataOptions dataOptions =  new SuiObjectDataOptions(true,true,true,false,true,false,true);
+        SuiObjectResponseQuery query = new SuiObjectResponseQuery(filter, dataOptions);
+
+        ObjectsPage ownedObjects = client.getOwnedObjects("0xab7f6e97232d633689cf762989455cceb769587c69a9f09a23f537f5605f9e78",
                 query, null, 50);
         System.out.println(ownedObjects);
         System.out.println(objectMapper.writeValueAsString(ownedObjects));
@@ -204,9 +211,9 @@ public class SuiJsonRpcClientTests {
 
     @Test
     void testGetObject_1() throws MalformedURLException, JsonProcessingException {
-        SuiJsonRpcClient client = new SuiJsonRpcClient("https://fullnode.devnet.sui.io/");
+        SuiJsonRpcClient client = new SuiJsonRpcClient("https://fullnode.mainnet.sui.io/");
         SuiObjectResponse getObjectDataResponse = client.getObject(
-                "0x1a8e812a50899e9356044b99b1195771082e9197",
+                "0x5f1c2f44c90396e1342a311688d670cf7a5c2106021530ec29a15f0c9c0eb590",
                 new SuiObjectDataOptions(
                         true,
                         true,
@@ -534,11 +541,11 @@ public class SuiJsonRpcClientTests {
 
     @Test
     void testGetBalance_1() throws MalformedURLException {
-        SuiJsonRpcClient client = new SuiJsonRpcClient("https://fullnode.devnet.sui.io/");
+        SuiJsonRpcClient client = new SuiJsonRpcClient("https://fullnode.mainnet.sui.io/");
         //SuiJsonRpcClient client = new SuiJsonRpcClient("http://localhost:9000");
         CoinBalance balance = client.getBalance(
-                "0x3c2cf35a0d4d29dd9d1f6343a6eafe03131bfafa",
-                null//SUI_COIN_TYPE
+                "0xab7f6e97232d633689cf762989455cceb769587c69a9f09a23f537f5605f9e78",
+                "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN"//SUI_COIN_TYPE
         );
         System.out.println(balance);
     }
@@ -553,9 +560,9 @@ public class SuiJsonRpcClientTests {
         System.out.println(balanceList);
     }
 
-    //@Test
+    @Test
     void testPrivateKeyToPublicKey() {
-        String privateKeyHex = "";//fill in private key
+        String privateKeyHex = "suiprivkeyxxxx";//fill in private key
         byte[] privateKeyBytes = HexUtils.hexToByteArray(privateKeyHex);
         Ed25519PrivateKeyParameters privateKeyParameters = new Ed25519PrivateKeyParameters(privateKeyBytes);
         Ed25519PublicKeyParameters publicKeyParameters = privateKeyParameters.generatePublicKey();
@@ -567,33 +574,202 @@ public class SuiJsonRpcClientTests {
     }
 
     @Test
+    void testHex(){
+        String privateKeyHex = "suiprivkeyxxxx";
+        byte[] privateKeyBytes = HexUtils.fromSuiPrivateKey(privateKeyHex);
+        System.out.println(privateKeyBytes);
+
+
+
+        // 生成 Ed25519 公钥
+        Ed25519PrivateKeyParameters privateKeyParams = new Ed25519PrivateKeyParameters(privateKeyBytes);
+        Ed25519PublicKeyParameters publicKeyParams = privateKeyParams.generatePublicKey();
+        byte[] rawPublicKey = publicKeyParams.getEncoded();
+
+        // 添加 0x00 前缀（表示 Ed25519 方案）
+        byte[] suiPublicKey = new byte[1 + rawPublicKey.length];
+        suiPublicKey[0] = 0x00; // Ed25519 scheme flag
+        System.arraycopy(rawPublicKey, 0, suiPublicKey, 1, rawPublicKey.length);
+
+        // 返回 Base64 编码的公钥
+        String publicKeyBase64 = Base64.getEncoder().encodeToString(suiPublicKey);
+        System.out.println(publicKeyBase64);
+
+
+        byte[] aas = TransactionUtils.ed25519SignTransactionBytes(privateKeyBytes, "AA");
+        System.out.println(aas);
+    }
+
+    @Test
     void testExecuteMoveCall_1() throws MalformedURLException, JsonProcessingException {
         SuiJsonRpcClient client = new SuiJsonRpcClient("https://fullnode.devnet.sui.io/");
         //SuiJsonRpcClient client = new SuiJsonRpcClient("http://localhost:9000");
-        String signerAddress = "0x3c2cf35a0d4d29dd9d1f6343a6eafe03131bfafa";
+        String signerAddress = "0xab7f6e97232d633689cf762989455cceb769587c69a9f09a23f537f5605f9e78";
         TransactionBytes encodeResult = encodeATestMoveCallTransaction(client, signerAddress);
         System.out.println(encodeResult);
         //System.out.println(objectMapper.writeValueAsString(result));
+//        String txBytes = encodeResult.getTxBytes();
+
+
+//        String sigScheme = SignatureScheme.ED25519;
+
+        String privateKeyHex = "suiprivkeyxxxx";//todo fill in the private key here
+//        byte[] privateKeyBytes = HexUtils.fromSuiPrivateKey(privateKeyHex);
+//
+//        // 生成 Ed25519 公钥
+//        Ed25519PrivateKeyParameters privateKeyParams = new Ed25519PrivateKeyParameters(privateKeyBytes);
+//        Ed25519PublicKeyParameters publicKeyParams = privateKeyParams.generatePublicKey();
+//        byte[] rawPublicKey = publicKeyParams.getEncoded();
+//
+//        // 添加 0x00 前缀（表示 Ed25519 方案）
+//        byte[] suiPublicKey = new byte[1 + rawPublicKey.length];
+//        suiPublicKey[0] = 0x00; // Ed25519 scheme flag
+//        System.arraycopy(rawPublicKey, 0, suiPublicKey, 1, rawPublicKey.length);
+//
+//        // 返回 Base64 编码的公钥
+//        String publicKeyBase64 = Base64.getEncoder().encodeToString(suiPublicKey);
+//
+//        SuiExecuteTransactionResponse response = executeTransaction(client, txBytes,
+//                publicKeyBase64, sigScheme, HexUtils.fromSuiPrivateKey(privateKeyHex));
+//        System.out.println(response);
+
+
+
+        // 1. 解码私钥
+        byte[] privateKeyBytes = HexUtils.fromSuiPrivateKey(privateKeyHex);
+
+        // 2. 解码交易字节
         String txBytes = encodeResult.getTxBytes();
+        byte[] txBytesDecoded = Base64.getDecoder().decode(txBytes);
+
+        // 3. 生成签名
+        byte[] signature = TransactionUtils.ed25519SignTransactionBytes(privateKeyBytes, txBytesDecoded);
+
+        // 4. 获取公钥
+        Ed25519PrivateKeyParameters privateKeyParams = new Ed25519PrivateKeyParameters(privateKeyBytes);
+        Ed25519PublicKeyParameters publicKeyParams = privateKeyParams.generatePublicKey();
+        byte[] publicKeyBytes = publicKeyParams.getEncoded();
+
+        // 5. 组装完整签名
+        byte[] serializedSignature = Bytes.concat(
+                new byte[]{0x00},  // Ed25519 scheme flag
+                signature,         // 64 bytes signature
+                publicKeyBytes    // 32 bytes public key
+        );
+
+        // 打印调试信息
+        System.out.println("Full signature (hex): " + HexUtils.byteArrayToHex(serializedSignature));
+        System.out.println("Full signature (base64): " +
+                Base64.getEncoder().encodeToString(serializedSignature));
+
+
+
         String sigScheme = SignatureScheme.ED25519;
-
-        String privateKeyHex = "";//todo fill in the private key here
-        String publicKeyBase64 = "zSg6kZMFM5h7HSQp2xsEU9A+WxiNACmKS7ZBX2y/QU4=";
-
         SuiExecuteTransactionResponse response = executeTransaction(client, txBytes,
-                publicKeyBase64, sigScheme, HexUtils.hexToByteArray(privateKeyHex));
+                null, sigScheme, HexUtils.fromSuiPrivateKey(privateKeyHex));
         System.out.println(response);
-//        System.out.println(txBytes);
-//        System.out.println(HexUtils.byteArrayToHex(Base64.getDecoder().decode(txBytes)));
-//        Arrays.stream(result.getInputObjects())
-//                .filter(i -> i instanceof InputObjectKind.ImmOrOwnedMoveObject)
-//                .forEach(i -> {
-//                    InputObjectKind.ImmOrOwnedMoveObject immOrOwnedMoveObject = (InputObjectKind.ImmOrOwnedMoveObject) i;
-//                    System.out.println(immOrOwnedMoveObject.getImmOrOwnedMoveObject());
-//                    System.out.println(HexUtils.byteArrayToHex(Base64.getDecoder().decode(
-//                            immOrOwnedMoveObject.getImmOrOwnedMoveObject().getDigest()
-//                    )));
-//                });
+
+    }
+
+    @Test
+    void testSignatureVerification() {
+        // 1. 准备测试数据
+        String privateKeyStr = "suiprivkeyxxxx";
+        String testTxBase64 = "AAACAQEZ7S1EjJqVm4H99mxDGCabC7s53V5lVLqfz6VJbwQ4vKIAAAAAAAAAAQAIB7IBAAAAAAABAPPhryMBl1FCuG1rjiqODH2lfVTQboZjgfeJWjN5u443BHRldGgEbWludAACAQAAAQEAq39ulyMtYzaJz3YpiUVczrdpWHxpqfCaI/U39WBfnngBPZHZulX7XZH7qI7Zv/hEdvhvUo21wwipaL1hRSmql6adAAAAAAAAACDzB3XjZkp6DUyET45GU5BcE5WHgv9CB7N86GmYoMEevat/bpcjLWM2ic92KYlFXM63aVh8aanwmiP1N/VgX5546AMAAAAAAABAQg8AAAAAAAA="; // 示例交易数据
+
+        // 2. 获取私钥和生成公钥
+        byte[] privateKeyBytes = HexUtils.fromSuiPrivateKey(privateKeyStr);
+        Ed25519PrivateKeyParameters privateKey = new Ed25519PrivateKeyParameters(privateKeyBytes);
+        Ed25519PublicKeyParameters publicKey = privateKey.generatePublicKey();
+
+        // 3. 生成签名
+        byte[] signature = TransactionUtils.ed25519SignTransactionBytes(privateKeyBytes, testTxBase64);
+
+        // 4. 准备验证数据
+        byte[] txBytes = Base64.getDecoder().decode(testTxBase64);
+        byte[] messageToVerify = Bytes.concat(TransactionUtils.INTENT_BYTES, txBytes);
+
+        // 5. 验证签名
+        boolean isValid = TransactionUtils.verifySignature(
+                publicKey.getEncoded(),
+                signature,
+                messageToVerify
+        );
+
+        System.out.println("isValid"+isValid);
+
+
+
+        // 打印调试信息
+        System.out.println("Signature length: " + signature.length);
+        System.out.println("Signature (Base64): " + Base64.getEncoder().encodeToString(signature));
+        System.out.println("Public Key (Base64): " + Base64.getEncoder().encodeToString(publicKey.getEncoded()));
+    }
+
+
+    @Test
+    void testSignatureFormat() throws MalformedURLException {
+        String txBytes = "AAACAQEZ7S1EjJqVm4H99mxDGCabC7s53V5lVLqfz6VJbwQ4vKIAAAAAAAAAAQAIB7IBAAAAAAABAPPhryMBl1FCuG1rjiqODH2lfVTQboZjgfeJWjN5u443BHRldGgEbWludAACAQAAAQEAq39ulyMtYzaJz3YpiUVczrdpWHxpqfCaI/U39WBfnngBPZHZulX7XZH7qI7Zv/hEdvhvUo21wwipaL1hRSmql6adAAAAAAAAACDzB3XjZkp6DUyET45GU5BcE5WHgv9CB7N86GmYoMEevat/bpcjLWM2ic92KYlFXM63aVh8aanwmiP1N/VgX5546AMAAAAAAABAQg8AAAAAAAA="; // 示例交易数据
+        String privateKey = "suiprivkeyxxxx";
+
+//        byte[] privateKeyBytes = HexUtils.fromSuiPrivateKey(privateKey);
+//        Ed25519PrivateKeyParameters privateKeyParams = new Ed25519PrivateKeyParameters(privateKeyBytes);
+//        Ed25519PublicKeyParameters publicKeyParams = privateKeyParams.generatePublicKey();
+//        byte[] publicKeyBytes = publicKeyParams.getEncoded();
+//
+//        // 解码交易字节
+//        byte[] txBytesDecoded = Base64.getDecoder().decode(txBytes);
+//
+//        // 生成签名 - 直接对交易字节签名
+//        byte[] signature = TransactionUtils.ed25519SignTransactionBytes(privateKeyBytes, txBytesDecoded);
+//
+//        // 组装完整签名 - 添加 flag 和公钥
+//        byte[] serializedSignature = Bytes.concat(
+//                new byte[]{0x00},  // Ed25519 scheme flag
+//                signature,         // 64 bytes signature
+//                publicKeyBytes    // 32 bytes public key
+//        );
+//
+//        String base64Signature = Base64.getEncoder().encodeToString(serializedSignature);
+//        System.out.println("Signature (base64): " + base64Signature);
+
+
+
+        // 1. 解码私钥
+        byte[] privateKeyBytes = HexUtils.fromSuiPrivateKey(privateKey);
+
+        // 2. 解码交易字节
+        byte[] txBytesDecoded = Base64.getDecoder().decode(txBytes);
+
+        // 3. 生成签名
+        byte[] signature = TransactionUtils.ed25519SignTransactionBytes(privateKeyBytes, txBytesDecoded);
+
+        // 4. 获取公钥
+        Ed25519PrivateKeyParameters privateKeyParams = new Ed25519PrivateKeyParameters(privateKeyBytes);
+        Ed25519PublicKeyParameters publicKeyParams = privateKeyParams.generatePublicKey();
+        byte[] publicKeyBytes = publicKeyParams.getEncoded();
+
+        // 5. 组装完整签名
+        byte[] serializedSignature = Bytes.concat(
+                new byte[]{0x00},  // Ed25519 scheme flag
+                signature,         // 64 bytes signature
+                publicKeyBytes    // 32 bytes public key
+        );
+
+        // 打印调试信息
+        System.out.println("Full signature (hex): " + HexUtils.byteArrayToHex(serializedSignature));
+        System.out.println("Full signature (base64): " +
+                Base64.getEncoder().encodeToString(serializedSignature));
+
+
+
+        String sigScheme = SignatureScheme.ED25519;
+        SuiJsonRpcClient client = new SuiJsonRpcClient("https://fullnode.devnet.sui.io/");
+        SuiExecuteTransactionResponse response = executeTransaction(client, txBytes,
+                null, sigScheme, HexUtils.fromSuiPrivateKey(privateKey));
+        System.out.println(response);
+
+
     }
 
     private SuiExecuteTransactionResponse executeTransaction(SuiJsonRpcClient client,
@@ -606,34 +782,53 @@ public class SuiJsonRpcClientTests {
         } else {
             throw new UnsupportedOperationException();
         }
-        byte[] publicKey = Base64.getDecoder().decode(publicKeyBase64);
-        //`flag || signature || pubkey` bytes,
-        byte[] signature = Bytes.concat(
-                new byte[]{sigSchemeByte},
-                TransactionUtils.ed25519SignTransactionBytes(privateKey, txBytes),
-                publicKey
+//        byte[] publicKey = Base64.getDecoder().decode(publicKeyBase64);
+
+        // 2. 创建 Ed25519 私钥并生成公钥
+        Ed25519PrivateKeyParameters privateKeyParams = new Ed25519PrivateKeyParameters(privateKey);
+        Ed25519PublicKeyParameters publicKeyParams = privateKeyParams.generatePublicKey();
+        byte[] publicKeyBytes = publicKeyParams.getEncoded();
+
+
+        // 3. 生成签名
+        byte[] signature = TransactionUtils.ed25519SignTransactionBytes(privateKey,txBytes);
+
+
+
+
+        // 修正：直接使用 Bytes.concat 来组装完整签名
+        byte[] serializedSignature = Bytes.concat(
+                new byte[]{0x00},  // flag
+                signature,         // 64 bytes signature
+                publicKeyBytes     // 32 bytes public key
         );
+
+
+        System.out.println("Full signature (base64): " +
+                Base64.getEncoder().encodeToString(serializedSignature));
+
         String requestType = ExecuteTransactionRequestType.WAIT_FOR_EFFECTS_CERT;
 
         SuiExecuteTransactionResponse response = client.executeTransactionSerializedSig(
                 txBytes,
-                Base64.getEncoder().encodeToString(signature),
+                Base64.getEncoder().encodeToString(serializedSignature),
                 requestType
         );
         return response;
     }
 
     private TransactionBytes encodeATestMoveCallTransaction(SuiJsonRpcClient client, String signerAddress) {
-        String packageObjectId = "0x2";
-        String module = "devnet_nft";
+        String packageObjectId = "0x47729a93e74c93d4c3dcf5b3da8b006b40267fc7149c6361c175f2f7a38522d1";
+        String module = "teth";
         String function = "mint";
         String[] typeArguments = new String[0];
         SuiJsonValue[] arguments = new SuiJsonValue[]{
-                new SuiJsonValue.String_("Test NFT"),
-                new SuiJsonValue.String_("..."),
-                new SuiJsonValue.String_("http://test.org/test-nft.png")
+                new SuiJsonValue.String_("0x6820de3c4428c4045f389894d73f60c78c451c3770f0ae2ed852ee1636429390"),
+                new SuiJsonValue.U64(111111),
+
         };
         long gasBudget = DEFAULT_MAX_GAS_BUDGE;
+
         String gasPayment = selectGasPayment(client, signerAddress, gasBudget);
         TransactionBytes result = client.moveCall(signerAddress,
                 packageObjectId, module, function,

@@ -39,7 +39,10 @@ public interface EventQuery {
     class AllJsonSerializer extends JsonSerializer<All> {
         @Override
         public void serialize(All value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-            gen.writeString("All");
+            gen.writeStartObject();
+            gen.writeArrayFieldStart("All");
+            gen.writeEndArray();
+            gen.writeEndObject();
         }
     }
 

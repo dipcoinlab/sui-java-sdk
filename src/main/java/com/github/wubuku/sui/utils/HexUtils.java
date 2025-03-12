@@ -1,6 +1,7 @@
 package com.github.wubuku.sui.utils;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 public class HexUtils {
@@ -18,8 +19,7 @@ public class HexUtils {
     }
 
     public static byte[] hexToByteArray(String h) {
-        String tmp = h.substring(0, 2);
-        if (tmp.equals("0x")) {
+        if (h.startsWith("0x")){
             h = h.substring(2);
         }
         int hexlen = h.length();
@@ -38,6 +38,12 @@ public class HexUtils {
         }
         return result;
     }
+
+    public static byte[] fromSuiPrivateKey(String suiPrivateKey) {
+        return Bech32Utils.fromBech32(suiPrivateKey);
+    }
+
+
 
     public static String byteListToHexWithPrefix(List<Byte> bytes) {
         return "0x" + byteListToHex(bytes);

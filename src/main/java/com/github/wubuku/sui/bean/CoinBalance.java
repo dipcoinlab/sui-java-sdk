@@ -1,5 +1,7 @@
 package com.github.wubuku.sui.bean;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.math.BigInteger;
 
 /**
@@ -15,6 +17,7 @@ import java.math.BigInteger;
  * }
  * </pre>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CoinBalance {
     private String coinType;
     private Long coinObjectCount;

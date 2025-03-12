@@ -23,7 +23,7 @@ public class JsonRpcTests {
 
     @Test
     void testJsonRpc_1() throws MalformedURLException, JSONRPC2SessionException, JsonProcessingException {
-        String suiDevnetRpcHost = "https://fullnode.devnet.sui.io/";
+        String suiDevnetRpcHost = "https://fullnode.mainnet.sui.io/";
         JSONRPC2Session jsonrpc2Session = new JSONRPC2Session(new URL(suiDevnetRpcHost));
         if (false) {
             List<Object> params_1 = new ArrayList<>();
@@ -33,34 +33,36 @@ public class JsonRpcTests {
             //params.add(new EventId(1L, 0L)); // cursor
             params_1.add(1);// The third parameter is 'limit'
             params_1.add(false);// The fourth parameter is descending_order
-            JSONRPC2Request jsonrpc2Request_1 = new JSONRPC2Request("sui_getEvents", params_1, 1);
+            JSONRPC2Request jsonrpc2Request_1 = new JSONRPC2Request("suix_queryEvents", params_1, 1);
             JSONRPC2Response<PaginatedEvents> jsonrpc2Response = jsonrpc2Session.send(jsonrpc2Request_1,
                     new TypeReference<PaginatedEvents>() {
                     });
             System.out.println(jsonrpc2Response);
             System.out.println(new ObjectMapper().writeValueAsString(jsonrpc2Response));
         }
-//        List<Object> params_2 = new ArrayList<>();
-//        params_2.add(new EventQuery.MoveEvent("0x2::devnet_nft::MintNFTEvent"));// The first parameter is EventQuery.
-//        params_2.add(null);// The second parameter is cursor : <EventID> - optional paging cursor
-//        params_2.add(1);// limit
-//        params_2.add(true);// descending_order
-//        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("sui_getEvents", params_2, 1);
-//        JSONRPC2Response<PaginatedMoveEvents<MintNFTEvent>> jsonrpc2Response2 = jsonrpc2Session
-//                .sendAndGetParametricTypeResult(jsonrpc2Request,
-//                        PaginatedMoveEvents.class,
-//                        MintNFTEvent.class);
-//        System.out.println(jsonrpc2Response2);
-//        System.out.println(new ObjectMapper().writeValueAsString(jsonrpc2Response2));
+
+
+        List<Object> params_2 = new ArrayList<>();
+        params_2.add(new EventQuery.MoveModule("0x8beb649d6a66b26d81682bee103698d0987004f3653151e1b439a23abb670dbe","margin_bank"));// The first parameter is EventQuery.
+        params_2.add(null);// The second parameter is cursor : <EventID> - optional paging cursor
+        params_2.add(8);// limit
+        params_2.add(true);// descending_order
+        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("suix_queryEvents", params_2, 1);
+
+        JSONRPC2Response<PaginatedEvents> jsonrpc2Response = jsonrpc2Session.send(jsonrpc2Request,
+                new TypeReference<PaginatedEvents>() {
+                });
+        System.out.println(jsonrpc2Response);
+        System.out.println(new ObjectMapper().writeValueAsString(jsonrpc2Response));
     }
 
     @Test
     void testJsonRpc_2() throws MalformedURLException, JSONRPC2SessionException, JsonProcessingException {
-        String suiDevnetRpcHost = "https://fullnode.devnet.sui.io/";
+        String suiDevnetRpcHost = "https://fullnode.mainnet.sui.io/";
         JSONRPC2Session jsonrpc2Session = new JSONRPC2Session(new URL(suiDevnetRpcHost));
         List<Object> params = new ArrayList<>();
-        params.add("0x3c2cf35a0d4d29dd9d1f6343a6eafe03131bfafa");
-        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("sui_getObjectsOwnedByAddress", params, 1);
+        params.add("0xab7f6e97232d633689cf762989455cceb769587c69a9f09a23f537f5605f9e78");
+        JSONRPC2Request jsonrpc2Request = new JSONRPC2Request("suix_getOwnedObjects", params, 1);
         JSONRPC2Response<List<SuiObjectInfo>> jsonrpc2Response2 = jsonrpc2Session.sendAndGetListResult(
                 jsonrpc2Request, SuiObjectInfo.class);
         System.out.println(new ObjectMapper().writeValueAsString(jsonrpc2Response2));

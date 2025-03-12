@@ -111,6 +111,8 @@ public interface InputObjectKind {
             private String id;
             @JsonProperty("initial_shared_version")
             private Long initialSharedVersion;
+            private boolean mutable;
+
 
             public SharedMoveObjectProperties() {
             }
@@ -134,6 +136,13 @@ public interface InputObjectKind {
 
             public void setInitialSharedVersion(Long initialSharedVersion) {
                 this.initialSharedVersion = initialSharedVersion;
+            }
+            public boolean isMutable() {
+                return mutable;
+            }
+
+            public void setMutable(boolean mutable) {
+                this.mutable = mutable;
             }
 
             @Override
