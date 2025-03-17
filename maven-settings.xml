@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+  
+  <mirrors>
+    <!-- 阿里云仓库镜像 -->
+    <mirror>
+      <id>aliyun-public</id>
+      <mirrorOf>central</mirrorOf>
+      <name>阿里云公共仓库</name>
+      <url>https://maven.aliyun.com/repository/public</url>
+    </mirror>
+    <mirror>
+      <id>aliyun-central</id>
+      <mirrorOf>central</mirrorOf>
+      <name>阿里云中央仓库</name>
+      <url>https://maven.aliyun.com/repository/central</url>
+    </mirror>
+    <mirror>
+      <id>aliyun-spring</id>
+      <mirrorOf>spring</mirrorOf>
+      <name>阿里云Spring仓库</name>
+      <url>https://maven.aliyun.com/repository/spring</url>
+    </mirror>
+    
+    <!-- 添加一个通配符镜像，拦截所有请求 -->
+    <mirror>
+      <id>aliyun-all</id>
+      <mirrorOf>*</mirrorOf>
+      <name>阿里云所有仓库</name>
+      <url>https://maven.aliyun.com/repository/public</url>
+    </mirror>
+  </mirrors>
+  
+  <!-- 禁用默认的远程仓库 -->
+  <profiles>
+    <profile>
+      <id>default-repositories</id>
+      <repositories>
+        <repository>
+          <id>central</id>
+          <url>https://maven.aliyun.com/repository/public</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+  
+  <activeProfiles>
+    <activeProfile>default-repositories</activeProfile>
+  </activeProfiles>
+
+</settings>
